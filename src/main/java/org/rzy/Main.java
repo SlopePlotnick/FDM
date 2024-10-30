@@ -1,53 +1,35 @@
 package org.rzy;
 
-class SendWorker extends Thread {
-    private String name;
-    private int subBand;
-    private String message;
-
-    public SendWorker(String name, int subBand, String message) {
-        this.name = name;
-        this.subBand = subBand;
-        this.message = message;
-    }
-
-    @Override
-    public void run() {
-        Sender sender = new Sender(name);
-        sender.send(subBand, message);
-    }
-}
-
-class ReceiveWorker extends Thread {
-    private String name;
-    private int subBand;
-
-    public ReceiveWorker(String name, int subBand) {
-        this.name = name;
-        this.subBand = subBand;
-    }
-
-    @Override
-    public void run() {
-        Receiver receiver = new Receiver(name, subBand);
-        receiver.receive();
-    }
-}
-
 public class Main {
     public static void main(String[] args) {
-        SendWorker a1 = new SendWorker("A1", 0, "nihaowa");
-        ReceiveWorker a2 = new ReceiveWorker("A2", 0);
-        SendWorker b1 = new SendWorker("B1", 1, "qyy");
-        ReceiveWorker b2 = new ReceiveWorker("B2", 1);
-        SendWorker c1 = new SendWorker("C1", 2, "rzy");
-        ReceiveWorker c2 = new ReceiveWorker("C2", 2);
+        // 启动外部服务（Multiplexer 和 Demultiplexer），以准备发送和接收
+        new Thread(() -> {
+            try {
+                Multiplexer.main(new String[]{});
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
 
-        a1.start();
-        a2.start();
-        b1.start();
-        b2.start();
-        c1.start();
-        c2.start();
+        new Thread(() -> {
+            try {
+                Demultiplexer.main(new String[]{});
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+
+        // 创建发送者和接收者的图形界面
+        // A1 发送者
+        new SenderGUI("A1"); // 启动发送端 GUI
+        new ReceiverGUI("A2", 0); // 启动 A2 接收端 GUI
+
+        // B1 发送者
+        new SenderGUI("B1");
+        new ReceiverGUI("B2", 1);
+
+        // C1 发送者
+        new SenderGUI("C1");
+        new ReceiverGUI("C2", 2);
     }
 }
