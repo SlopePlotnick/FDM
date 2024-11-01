@@ -30,19 +30,32 @@ public class ReceiverGUI extends JFrame {
 
     private void startReceiving() {
         new Thread(() -> {
-            Receiver receiver = new Receiver(name, subBand);
             try (ServerSocket serverSocket = new ServerSocket(52000 + subBand)) {
-                Socket clientSocket = serverSocket.accept();
-                BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-
-                String message;
-                while ((message = in.readLine()) != null) {
-                    String[] strs = message.split("#");
-                    textArea.append(name + " received from " + strs[0] + " on subband " + strs[1] + ": " + strs[2] + "\n");
+                while (true) { // 无限循环以接受多个连接
+                    Socket clientSocket = serverSocket.accept(); // 接受一个新的客户端连接
+                    new Thread(() -> handleClient(clientSocket)).start(); // 为每个连接启动新线程进行处理
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }).start();
+    }
+
+    private void handleClient(Socket clientSocket) {
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()))) {
+            String message;
+            while ((message = in.readLine()) != null) { // 从该连接读取消息
+                String[] strs = message.split("#");
+                textArea.append(name + " received from " + strs[0] + " on subband " + strs[1] + ": " + strs[2] + "\n");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                clientSocket.close(); // 确保最终关闭socket，以释放资源
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }
